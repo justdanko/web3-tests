@@ -7,6 +7,63 @@
   <title>Web3 Tests</title>
 </head>
 <body>
-  Lorem ipsum dolor sit amet consectetur adipisicing elit. Corrupti porro numquam asperiores magni maiores quae nam sapiente facere eligendi eveniet qui quo, deleniti earum, nihil dolores, error architecto laborum repellat?
+  <p>the code for this page is pretty self explanatory and i encourage you to hit ctrl+u and read it.</p>
+    <p>this page is not endorsed or ran by optimism, this page is not financial advice</p>
+    step 1: <button class="connect">connect wallet</button>
+    <p class="selectedWallet" style="display: none">currently connected wallet: <span class="address"></span></p>
+    <p>
+      step 2: go to https://gateway-backend-mainnet.optimism.io/proof/&lt;your address goes here&gt; and copy in all the details here
+    </p>
+
+    <div>
+      step 3: paste data from page linked above here - <textarea></textarea>
+    </div>
+
+    <div> step 4: ensure you are on the optimism chain in metamask/whatever wallet before you hit send tx</div>
+    <div> step 5: <button class="send">send tx</button></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.6.8/ethers.umd.min.js" integrity="sha512-rQkwNC0M1xDe/Q5+60yxVaivh7dpaoZthM91gAkEq4/5aLmMVNkk/Ru9Fjf3bCVA1jbJXa5sZsLPBDKHy+0LaA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      document.querySelector('.connect').onclick = () => ethereum ?
+        ethereum.request({ method: 'eth_requestAccounts' }).then(() => {
+            document.querySelector('.address').textContent = ethereum.selectedAddress;
+            document.querySelector('.selectedWallet').style.display = 'block';
+        })
+        : alert('no wallet injected');
+      document.querySelector('.send').onclick = () => {
+        let data;
+        try {
+          const blob = document.querySelector('textarea').value;
+          data = JSON.parse(blob);
+        } catch(e) {
+          alert('error occurred while parsing data blob');
+          console.log(e);
+        }
+
+
+        if (!data.index || !data.amount || !data.proof)
+           return alert('data is missing index or amount or proof')
+
+         if (!ethereum.selectedAddress)
+           return alert('no ethereum wallet linked');
+
+        if (ethereum.chainId != '0xa' && ethereum.chainId != 10)
+            alert('you might have the wrong chain selected (optimism is 0xa / 10):' + ethereum.chainId);
+
+        new ethers.Contract(
+           '0xfedfaf1a10335448b7fa0268f56d2b44dbd357de',
+           ['function claim(uint,address,uint,bytes32[])'],
+           new ethers.providers.Web3Provider(window.ethereum).getSigner()
+        ).claim(
+          data.index,
+          ethereum.selectedAddress,
+          data.amount, data.proof
+        ).catch((e) => {
+          alert('error occurred while sending tx: ' + (e?.data?.message || e));
+          console.error(e);
+        })
+
+      }
+
+    </script>
 </body>
 </html>
